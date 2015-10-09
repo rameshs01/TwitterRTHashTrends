@@ -9,7 +9,7 @@ angular.module('myApp.twitterTrends', ['ngRoute', 'ui.grid','ui.grid.pagination'
   });
 }])
 
-.controller('TwitterTrendsCtrl', ['$scope','$http', function ($scope, $http) {
+.controller('TwitterTrendsCtrl', ['$scope','$http', '$timeout', function ($scope, $http, $timeout) {
 	
 	$scope.gridOptions1 = {
 	    paginationPageSizes: [100, 200, 300],
@@ -20,10 +20,17 @@ angular.module('myApp.twitterTrends', ['ngRoute', 'ui.grid','ui.grid.pagination'
 	    ]  
 	};
 	
-	$http.get('http://sandbox.hortonworks.com:9090/twittertrendsui/rest/hashtagtrends')
-	  .success(function (data) {
-	    $scope.gridOptions1.data = data;	   
-	});
+	var getTrends = function() { 
+		$timeout(function() {
+			 $http.get('http://sandbox.hortonworks.com:9090/twittertrendsui/rest/hashtagtrends')
+		  	  .success(function (data) {
+		  		$scope.gridOptions1.data = data;	   
+		  	  });
+			 getTrends();
+        }, 1000);
+	};
+	
+	getTrends();
 	
 	var funcOrder = function sort(a, b) {
 		if (a.count < b.count) {
