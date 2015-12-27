@@ -12,6 +12,7 @@ import backtype.storm.topology.TopologyBuilder;
 
 import com.rs.twitterstorm.bolt.HashtagExtractionBolt;
 import com.rs.twitterstorm.bolt.LogTwitterEventsBolt;
+import com.rs.twitterstorm.bolt.SolrUpdateBolt;
 import com.rs.twitterstorm.bolt.TwitterFilterBolt;
 import com.rs.twitterstorm.bolt.TwitterHashCountHBaseBolt;
 
@@ -23,6 +24,7 @@ public class TwitterEventProcessingTopology extends BaseTwitterEventTopology {
 	private static final String TWITTER_FILTER_BOLT_ID = "twitterFilterEventBolt";
 	private static final String HASH_TAG_SPLITTER_BOLD_ID = "hashtagSplitterBolt";
 	private static final String HASH_COUNT_HBASE_BOLD_ID = "hashcountHbaseBolt";
+	private static final String SOLOR_UPDATE_BOLT_ID = "solorUpdateBolt";
 
 	public TwitterEventProcessingTopology(String configFileLocation)
 			throws Exception {
@@ -54,7 +56,7 @@ public class TwitterEventProcessingTopology extends BaseTwitterEventTopology {
 	public void configureTwitterFileter(TopologyBuilder builder) {
 		TwitterFilterBolt twitterFilterBolt = new TwitterFilterBolt();
 		builder.setBolt(TWITTER_FILTER_BOLT_ID, twitterFilterBolt).shuffleGrouping(
-				KAFKA_SPOUT_ID);
+				SOLOR_UPDATE_BOLT_ID);
 	}
 	
 	public void configureHasTagSplitter(TopologyBuilder builder) {
@@ -73,10 +75,16 @@ public class TwitterEventProcessingTopology extends BaseTwitterEventTopology {
 		LogTwitterEventsBolt logBolt = new LogTwitterEventsBolt();
 		builder.setBolt(LOG_TWITTER_BOLT_ID, logBolt).shuffleGrouping(HASH_COUNT_HBASE_BOLD_ID);
 	}
+	
+	public void configureSolorUpdate(TopologyBuilder builder) {
+		SolrUpdateBolt solorUpate = new SolrUpdateBolt();
+		builder.setBolt(SOLOR_UPDATE_BOLT_ID, solorUpate).shuffleGrouping(KAFKA_SPOUT_ID);
+	}
 
 	private void buildAndSubmit() throws Exception {
 		TopologyBuilder builder = new TopologyBuilder();
-		configureKafkaSpout(builder);		
+		configureKafkaSpout(builder);	
+		configureSolorUpdate(builder);
 		configureTwitterFileter(builder);
 		configureHasTagSplitter(builder);
 		configureTwitterHashCountBolt(builder);
